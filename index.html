@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Accessibility Checker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.7.2/axe.min.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Georgia, serif;
+            transition: background-color 5s ease, color 5s ease, background-image 5s ease;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+            height: auto;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle span {
+            color: black; /* Light mode da yozuvlar qora rangda */
+        }
+
+        .dark-mode .theme-toggle span {
+            color: white; /* Dark mode da yozuvlar oq rangda */
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-icon {
+            width: 40px;
+            height: 40px;
+            color: black;
+        }
+
+        .dark-mode .theme-icon {
+            color: white;
+        }
+
+        h1, p {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            color: #333;
+            text-align: center; 
+            max-width: 800px; 
+            margin-bottom: 20px;
+        }
+
+        h1 {
+           font-size: 2.5rem;
+        }
+
+        p {
+           font-size: 1.2rem;
+        }
+
+        .dark-mode {
+            background-image: url('https://addons-media.operacdn.com/media/CACHE/images/themes/74/288974/1.0-rev1/images/0f15882bf4ecf7dadaf9dab185cdac0e/75a1e9e52604e4becc212f8500189560.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .light-mode {
+            background-image: url('https://addons-media.operacdn.com/media/CACHE/images/themes/30/289230/1.0-rev1/images/4db85a090372b664100fe32e6fd63e24/09a42e33e9c71d4174a9a0188fd90e96.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .dark-mode h1, 
+        .dark-mode p {
+            color: white;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            max-width: 400px;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        form:hover {
+            transform: scale(1.05); /* Hover paytida kattalashadi */
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3); /* Hoverda kuchliroq soya */
+        }
+
+        form label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        form input, form button {
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        form input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 4px solid transparent;
+            border-radius: 8px;
+            background: linear-gradient(white, white) padding-box, 
+                        linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #84fab0, #8fd3f4) border-box; /* Gradient border */
+            animation: borderColorCycle 3s infinite; /* Chegara animatsiyasi */
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); /* Ichki soya */
+            color: #333;
+            outline: none;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+@keyframes borderColorCycle {
+        0% {
+            background: linear-gradient(white, white) padding-box, 
+                            linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #84fab0, #8fd3f4) border-box;
+        }
+        50% {
+             background: linear-gradient(white, white) padding-box, 
+                         linear-gradient(135deg, #84fab0, #8fd3f4, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1) border-box;
+        }
+}
+
+        form input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+            animation: borderColorCycle 2s infinite;
+        }
+
+        form input[type="url"] {
+            width: 100%; /* Moslashuvchan kenglik */
+            max-width: 400px; /* Maxsus kenglik faqat URL uchun */
+            border: 1px solid #aaa; /* Biroz boshqacha chegara rangi */
+            border-radius: 6px; /* Burchaklarni biroz yumshatish */
+            padding: 12px; /* Qo'shimcha ichki bo'sh joy */
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Yengil soyalar */
+        }
+
+        form button {
+            background: linear-gradient(135deg, #00b4db, #0083b0);
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: transform 0.3s ease, background 0.3s ease;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #0078a5, #005f7f);
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 10px 20px; /* Qo'shimcha qulaylik uchun */
+            font-size: 16px;
+       }
+
+       button:hover {
+            background-color: #0056b3;
+       }
+
+        #results {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .language-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            z-index: 1000;
+        }
+
+        .language-toggle span {
+            color: black; /* Light mode da yozuvlar qora rangda */
+        }
+
+        .dark-mode .language-toggle span {
+            color: white;
+        }
+
+        .language-toggle:hover {
+            background-color: rgba(0,0,0,0.05);
+            transform: scale(1.05);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            width: 250px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .language-dropdown.visible {
+            display: flex;
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .language-option:hover {
+            background-color: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .language-flag {
+            width: 30px;
+            height: 20px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        footer {
+           position: fixed;
+           bottom: 0;
+           right: 0;
+           margin: 10px;
+           font-size: 14px;
+           color: gray;
+           font-family: Arial, sans-serif;
+           background-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+        h1 {
+           font-size: 2rem;
+        }
+
+        p {
+           font-size: 0.9rem;
+        }
+
+        input[type="url"] {
+           width: 90%;
+        }
+
+        button {
+           font-size: 0.9rem;
+           padding: 8px 16px;
+        }
+}
+    </style>
+</head>
+<body class="light-mode">
+    <header>
+        <div class="language-toggle" id="language-toggle">
+            <img src="https://flagcdn.com/w40/us.png" alt="English" class="language-icon" id="language-icon" aria-hidden="true">
+            <span id="language-text">English</span>
+        </div>
+        <div class="language-dropdown hidden" id="language-dropdown">
+            <div class="language-option" data-lang="en">
+                <img src="https://flagcdn.com/w40/us.png" alt="English" class="language-flag">
+                <span>English</span>
+            </div>
+            <div class="language-option" data-lang="uz">
+                <img src="https://cdn-icons-png.flaticon.com/512/4855/4855890.png" alt="Uzbek" class="language-flag">
+                <span>Uzbek</span>
+            </div>
+            <div class="language-option" data-lang="fr">
+                <img src="https://cdn-icons-png.flaticon.com/512/197/197560.png" alt="French" class="language-flag">
+                <span>French</span>
+            </div>
+            <div class="language-option" data-lang="de">
+                <img src="https://cdn-icons-png.flaticon.com/512/197/197571.png" alt="German" class="language-flag">
+                <span>German</span>
+            </div>
+            <div class="language-option" data-lang="zh">
+                <img src="https://cdn-icons-png.flaticon.com/512/197/197375.png" alt="Chinese" class="language-flag">
+                <span>Chinese</span>
+            </div>
+            <div class="language-option" data-lang="ru">
+                <img src="https://cdn-icons-png.flaticon.com/512/197/197408.png" alt="Russian" class="language-flag">
+                <span>Russian</span>
+            </div>
+            <div class="language-option" data-lang="es">
+                <img src="https://cdn-icons-png.flaticon.com/512/197/197593.png" alt="Spanish" class="language-flag">
+                <span>Spanish</span>
+            </div>
+            <div class="language-option" data-lang="ar">
+                <img src="https://cdn-icons-png.flaticon.com/512/13980/13980429.png" alt="Arabic" class="language-flag">
+                <span>Arabic</span>
+            </div>
+        </div>
+        <div class="theme-toggle" id="theme-toggle">
+            <img src="https://lucide.dev/icons/moon.svg" alt="" class="theme-icon" id="theme-icon" aria-hidden="true">
+            <span id="theme-text">Dark Mode</span>
+        </div>
+    </header>
+    <div class="container">
+        <h1>Welcome to the Web Accessibility Checker!</h1>
+        <p>This tool will help you check for basic accessibility issues.</p>
+        <form id="accessibility-form">
+            <label for="url-input">Enter Website URL to Check:</label>
+            <input type="url" id="url-input" placeholder="https://example.com" required>
+            <button type="submit">Check Accessibility</button>
+        </form>
+        <div id="results"></div>
+    </div>
+    <footer>
+        <p>© 2025 Web Accessibility Checker. All Rights Reserved.</p>
+    </footer>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        const body = document.body;
+
+let isDarkMode = localStorage.getItem('darkMode') === 'true'; // LocalStorage bilan
+
+function updateTheme() {
+    if (isDarkMode) {
+        body.classList.add('dark-mode');
+        body.classList.remove('light-mode');
+        themeIcon.src = "https://img.icons8.com/?size=100&id=648&format=png&color=FFFFFF";
+        themeText.textContent = "Light Mode";
+
+        // Dark mode uchun language dropdown ranglarini o'zgartirish
+        languageDropdown.style.backgroundColor = '#44505d';
+        languageOptions.forEach(option => {
+            option.style.color = 'white';
+        });
+    } else {
+        body.classList.add('light-mode');
+        body.classList.remove('dark-mode');
+        themeIcon.src = "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/moon.svg";
+        themeText.textContent = "Dark Mode";
+
+        // Light mode uchun language dropdown ranglarini o'zgartirish
+        languageDropdown.style.backgroundColor = '#f1d3f3';
+        languageOptions.forEach(option => {
+            option.style.color = 'black';
+        });
+    }
+    localStorage.setItem('darkMode', isDarkMode);
+}
+
+themeToggle.addEventListener('click', () => {
+    isDarkMode = !isDarkMode;
+    updateTheme();
+});
+
+        const languageToggle = document.getElementById('language-toggle');
+        const languageDropdown = document.getElementById('language-dropdown');
+        const languageOptions = document.querySelectorAll('.language-option');
+        const languageText = document.getElementById('language-text');
+        const languageIcon = document.getElementById('language-icon');
+
+const translations = {
+    en: { 
+        title: "Welcome to the Web Accessibility Checker!", 
+        description: "This tool will help you check for basic accessibility issues.", 
+        enterUrl: "Enter Website URL to Check:", 
+        button: "Check Accessibility", 
+        footer: "© 2025 Web Accessibility Checker. All Rights Reserved."         
+    },
+    uz: { 
+        title: "Veb-Moslashuvchanlikni Tekshiruvchi Loyihasiga Xush Kelibsiz!", 
+        description: "Bu vosita sizga asosiy moslashuv muammolarini aniqlashda yordam beradi.", 
+        enterUrl: "Tekshirish uchun veb-sayt URL'ini kiriting:", 
+        button: "Moslashuvni Tekshirish", 
+        footer: "© 2025 Veb-Moslashuvchanlikni Tekshirish. Barcha huquqlar himoyalangan." 
+    },
+    fr: {
+        title: "Bienvenue sur le vérificateur d'accessibilité Web!", 
+        description: "Cet outil vous aidera à vérifier les problèmes d'accessibilité de base.", 
+        enterUrl: "Entrez l'URL du site Web à vérifier:", 
+        button: "Vérifier l'accessibilité", 
+        footer: "© 2025 Vérificateur d'accessibilité Web. Tous droits réservés."
+    },         
+    de: {
+        title: "Willkommen beim Web-Barrierefreiheits-Checker!", 
+        description: "Dieses Tool hilft Ihnen, grundlegende Barrierefreiheitsprobleme zu überprüfen.", 
+        enterUrl: "Geben Sie die Website-URL zur Überprüfung ein:", 
+        button: "Barrierefreiheit überprüfen", 
+        footer: "© 2025 Web-Barrierefreiheits-Checker. Alle Rechte vorbehalten." 
+    },
+    zh: {
+        title: "欢迎使用网页无障碍检查器！", 
+        description: "该工具将帮助您检查基本的无障碍问题。", 
+        enterUrl: "输入要检查的网站URL：", 
+        button: "检查无障碍", 
+        footer: "© 2025 网页无障碍检查器。保留所有权利。" 
+    },
+    ru: {
+        title: "Добро пожаловать в средство проверки доступности веб-сайтов!", 
+        description: "Этот инструмент поможет вам проверить основные проблемы доступности.", 
+        enterUrl: "Введите URL веб-сайта для проверки:", 
+        button: "Проверить доступность", 
+        footer: "© 2025 Средство проверки доступности веб-сайтов. Все права защищены." 
+    },    
+    es: {
+        title: "¡Bienvenido al verificador de accesibilidad web!", 
+        description: "Esta herramienta te ayudará a verificar problemas básicos de accesibilidad.", 
+        enterUrl: "Ingresa la URL del sitio web para verificar:", 
+        button: "Verificar accesibilidad", 
+        footer: "© 2025 Verificador de accesibilidad web. Todos los derechos reservados." 
+    },
+    ar: {
+        title: "مرحبًا بكم في أداة فحص إمكانية الوصول إلى الويب!", 
+        description: "ستساعدك هذه الأداة على التحقق من مشكلات إمكانية الوصول الأساسية.", 
+        enterUrl: "أدخل عنوان URL للموقع الإلكتروني للتحقق:", 
+        button: "فحص إمكانية الوصول", 
+        footer: "© 2025 أداة فحص إمكانية الوصول إلى الويب. جميع الحقوق محفوظة."
+    } 
+};
+
+const flagMap = {
+    en: 'https://flagcdn.com/w40/us.png',
+    uz: 'https://flagcdn.com/w40/uz.png',
+    fr: 'https://flagcdn.com/w40/fr.png',
+    de: 'https://flagcdn.com/w40/de.png',
+    zh: 'https://flagcdn.com/w40/cn.png',
+    ru: 'https://flagcdn.com/w40/ru.png',
+    es: 'https://flagcdn.com/w40/es.png',
+    ar: 'https://flagcdn.com/w40/sa.png'
+};
+
+languageToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    languageDropdown.classList.toggle('visible');
+});
+
+languageOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        const lang = option.dataset.lang;
+        
+        // Bayroq va matnlarni yangilash
+        languageIcon.src = flagMap[lang];
+        languageText.textContent = option.querySelector('span').textContent;
+        
+        // Kontentni tarjima qilish
+        document.documentElement.lang = lang;
+        document.title = translations[lang].title;
+        document.querySelector('h1').textContent = translations[lang].title;
+        document.querySelector('p').textContent = translations[lang].description;
+        document.querySelector('label[for="url-input"]').textContent = translations[lang].enterUrl;
+        document.querySelector('#url-input').placeholder = translations[lang].enterUrl;
+        document.querySelector('button').textContent = translations[lang].button;
+        document.querySelector('footer p').textContent = translations[lang].footer;
+        
+        languageDropdown.classList.remove('visible');
+    });
+});
+
+// Tashqi click uchun yopish
+document.addEventListener('click', (e) => {
+    if (!languageToggle.contains(e.target)) {
+        languageDropdown.classList.remove('visible');
+    }
+});
+
+        document.getElementById('accessibility-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const urlInput = document.getElementById('url-input');
+            const resultsDiv = document.getElementById('results');
+            const websiteURL = urlInput.value;
+
+            resultsDiv.innerHTML = '';
+
+            resultsDiv.innerHTML = `<p>Checking accessibility for: ${websiteURL}...</p>`;
+
+            try {
+                axe.run(document, {}, function(err, results) {
+                    if (err) {
+                        resultsDiv.innerHTML = `<p>Error during analysis: ${err.message}</p>`;
+                        return;
+                    }
+
+                    if (results.violations.length > 0) {
+                        const issues = results.violations.map(violation => `
+                            <div>
+                                <h3>${violation.id}</h3>
+                                <p>${violation.description}</p>
+                                <ul>
+                                    ${violation.nodes.map(node => `<li>${node.html}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `).join('');
+                        resultsDiv.innerHTML = `<p>Found ${results.violations.length} accessibility issues:</p>${issues}`;
+                    } else {
+                        resultsDiv.innerHTML = '<p>No accessibility issues found!</p>';
+                    }
+                });
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
